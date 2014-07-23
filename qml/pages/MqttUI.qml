@@ -43,6 +43,12 @@ Page
                 placeholderText: "Enter host"
                 text: "devaamo.fi"
                 width: parent.width
+                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.onClicked:
+                {
+                    focus = false
+                    _topic.focus = true
+                }
             }
 
             TextField
@@ -52,6 +58,13 @@ Page
                 placeholderText: "Enter topic"
                 text: "sailfish/huurretursas/test"
                 width: parent.width
+                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.onClicked:
+                {
+                    focus = false
+                    _username.focus = true
+                }
+
             }
 
             TextField
@@ -61,6 +74,13 @@ Page
                 placeholderText: "Enter username"
                 text: "huurretursas"
                 width: parent.width
+                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.onClicked:
+                {
+                    focus = false
+                    _password.focus = true
+                }
+
             }
 
             TextField
@@ -70,6 +90,14 @@ Page
                 placeholderText: "Enter password"
                 text: "secret"
                 width: parent.width
+                echoMode: focus ? TextInput.Normal : TextInput.Password
+                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.onClicked:
+                {
+                    focus = false
+                    _message.focus = true
+                }
+
             }
 
             TextField
@@ -79,6 +107,11 @@ Page
                 placeholderText: "Enter message"
                 text: "hello world"
                 width: parent.width
+                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                EnterKey.onClicked:
+                {
+                    mqtt.mqtt_main(_hostname.text, _topic.text, _username.text, _password.text, _message.text)
+                }
             }
 
             Button
