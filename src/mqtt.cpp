@@ -19,10 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 Mqtt::Mqtt(QObject *parent) :
     QObject(parent)
 {
-    m_var = "";
-
     emit versionChanged();
-
 }
 
 QString Mqtt::readVersion()
@@ -32,10 +29,18 @@ QString Mqtt::readVersion()
 
 void Mqtt::readInitParams()
 {
-    QSettings settings;
-    m_var = settings.value("var", "").toString();
+    QSettings settings("mqtt_test", "mqtt");
 
-    emit varChanged();
+    settings.beginGroup("user");
+    _username = settings.value("username", "").toString();
+    _password = settings.value("password", "").toString();
+    settings.endGroup();
+    settings.beginGroup("muut");
+    _hostname = settings.value("hostname", "devaamo.fi").toString();
+    _topic = settings.value("topic", "sailfish/").toString();
+    settings.endGroup();
+
+    emit settingsReady();
 }
 
 Mqtt::~Mqtt()
@@ -43,20 +48,6 @@ Mqtt::~Mqtt()
 }
 
 
-QString Mqtt::readVar()
-{
-    return m_var;
-}
-
-void Mqtt::writeVar(QString s)
-{
-    m_var = s;
-
-    QSettings settings;
-    settings.setValue("var", m_var);
-
-    emit varChanged();
-}
 
 /*
  * MOSQUITTO
@@ -83,8 +74,7 @@ void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
     {
         /* Subscribe to broker information topics on successful connect. */
         //mosquitto_subscribe(mosq, NULL, "$SYS/#", 2);
-        mosquitto_publish(mosq, NULL, "hello/world", 5, "kimmo", 0, true);
-        qDebug() << "published";
+        qDebug() << "Connected";
     }
     else
     {
@@ -115,17 +105,31 @@ void my_publish_callback(struct mosquitto *mosq, void *userdata, int mid)
     qDebug() << "sent message id" << mid;
 }
 
-void Mqtt::mqtt_main()
+void Mqtt::mqtt_main(QString hostname, QString topic, QString username, QString password, QString message)
 {
 
-    char *host = "localhost";
+    qDebug() << hostname << topic << username << password << message;
+
+    /* talteen */
+
+    QSettings settings("mqtt_test", "mqtt");
+    settings.beginGroup("user");
+    settings.setValue("username", username);
+    settings.setValue("password", password);
+    settings.endGroup();
+    settings.beginGroup("muut");
+    settings.setValue("hostname", hostname);
+    settings.setValue("topic", topic);
+    settings.endGroup();
+
     int port = 1883;
     int keepalive = 60;
     bool clean_session = true;
     struct mosquitto *mosq = NULL;
 
+
     mosquitto_lib_init();
-    mosq = mosquitto_new("my_mqtt_test", clean_session, NULL);
+    mosq = mosquitto_new("mqtt_jolla", clean_session, NULL);
 
     if(!mosq)
     {
@@ -135,6 +139,11 @@ void Mqtt::mqtt_main()
     else
         qDebug() << "mosquitto init ok";
 
+    if (mosquitto_username_pw_set(mosq, username.toLocal8Bit().data(), password.toLocal8Bit().data()) == MOSQ_ERR_SUCCESS)
+        qDebug() << "username set ok";
+    else
+        qDebug() << "username set failed";
+
     mosquitto_log_callback_set(mosq, my_log_callback);
 
     mosquitto_connect_callback_set(mosq, my_connect_callback);
@@ -142,7 +151,7 @@ void Mqtt::mqtt_main()
     mosquitto_publish_callback_set(mosq, my_publish_callback);
     mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
 
-    if(mosquitto_connect(mosq, host, port, keepalive))
+    if(mosquitto_connect(mosq, hostname.toLocal8Bit().data(), port, keepalive))
     {
         qDebug() << "Unable to connect.";
         return;
@@ -150,7 +159,7 @@ void Mqtt::mqtt_main()
     else
         qDebug() << "Connected succefully";
 
-    mosquitto_publish(mosq, NULL, "hello/world", 5, "kimmo", 0, true);
+    mosquitto_publish(mosq, NULL, topic.toLocal8Bit().data(), message.length(), message.toLocal8Bit().data(), 0, true);
 
     while(!mosquitto_loop(mosq, -1, 0))
     {

@@ -18,28 +18,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 class Mqtt : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString variable READ readVar WRITE writeVar(QString) NOTIFY varChanged())
+
     Q_PROPERTY(QString version READ readVersion NOTIFY versionChanged())
 
 public:
     explicit Mqtt(QObject *parent = 0);
     ~Mqtt();
 
-    QString readVar();
+
     QString readVersion();
 
-    void writeVar(QString);
 
     Q_INVOKABLE void readInitParams();
 
-    Q_INVOKABLE void mqtt_main();
+    Q_INVOKABLE void mqtt_main(QString hostname, QString topic, QString username, QString password, QString message);
+
+    Q_INVOKABLE QString getHostname() { return _hostname; }
+    Q_INVOKABLE QString getTopic() { return _topic; }
+    Q_INVOKABLE QString getUsername() { return _username; }
+    Q_INVOKABLE QString getPassword() { return _password; }
+
 
 signals:
-    void varChanged();
+    void settingsReady();
     void versionChanged();
 
 private:
-    QString m_var;
+
+    QString _username;
+    QString _password;
+    QString _hostname;
+    QString _topic;
+
 };
 
 
