@@ -159,7 +159,7 @@ void Mqtt::mqtt_main(QString hostname, QString topic, QString username, QString 
     else
         qDebug() << "Connected succefully";
 
-    mosquitto_publish(mosq, NULL, topic.toLocal8Bit().data(), message.length(), message.toLocal8Bit().data(), 0, true);
+    mosquitto_publish(mosq, NULL, topic.toLocal8Bit().data(), message.length(), message.toLocal8Bit().data(), 0, false);
 
     while(!mosquitto_loop(mosq, -1, 0))
     {
